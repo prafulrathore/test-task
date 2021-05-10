@@ -1,30 +1,33 @@
-#imporing json
-import json
-# importing the requests library
-import requests, zipfile, io
+# importing required modules
+import requests, zipfile, io, os
 # importing pandas library
 import pandas as pd
-# Get the Url
+
+# To the Url
 url = 'https://www.jodidata.org/_resources/files/downloads/gas-data/jodi_gas_csv_beta.zip'
 
-# Get the request
-request = requests.get(url = url, stream=True)
-get_unzipfile = zipfile.ZipFile(io.BytesIO(request.content))
-# Read the Data
-Data = pd.read_csv(get_unzipfile.open(get_unzipfile.namelist()[0]))
+try:
+    # Get the requests
+    request = requests.get(url, stream=True)
+    # extracting the file
+    get_unzipfile = zipfile.ZipFile(io.BytesIO(request.content))
+    # Read the Data
+    Data = pd.read_csv(get_unzipfile.open(get_unzipfile.namelist()[0]))
+    Data.head()
+    # Get the Json Data
+    df = Data.to_json(orient = 'records', date_format='iso')
 
-separator = "\\"
+    # path of the current script 
+    path = '/home/rails/test-task'
 
-# Add the new columns
-for i in Data.itertuples():
-    index = str(i.Index)
-    Data["string_id"] = Data["ENERGY_PRODUCT"]+ separator + Data["FLOW_BREAKDOWN"].map(str) + separator + index
-    Data["points"] = Data[('TIME_PERIOD')]
-    Data["fields"] = Data.iloc[i,[0,2,3,4,5,6]]
+    # Specify the file name / To see the Json data
+    file = 'myfile.json'
 
-# Get the specific Column from the data
-Data = Data.iloc[:,[7,8]]
-Data.head()
+    # Creating a file at specified location
+    with open(os.path.join(path, file), 'w') as fp:
+        # To write Json data to new file
+        fp.write(df)
 
-# Get the json Data
-df = Data.to_json(orient = 'records', lines = True, date_format = 'iso')
+except requests.exceptions.ConnectionError as e:
+    request = "No response"
+
